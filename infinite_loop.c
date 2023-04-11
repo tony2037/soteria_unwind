@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <unistd.h>
+
 int funcC(int a, int b, int c) {
     return a + a*b + a*b*c;
 }
@@ -11,7 +14,8 @@ int funcA(int a) {
     return r * a;
 }
 int main(int c, char **v) {
-    
+    pid_t pid = getpid();
+    printf("Hello! I m an infinite loop\nMy PID: %d\n", pid);
     for (;;)
         funcA(20);
 }
