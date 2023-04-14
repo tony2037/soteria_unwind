@@ -14,25 +14,7 @@ static int pid = 0;
 module_param(pid, int, 0);
 MODULE_PARM_DESC(pid, "Process ID");
 
-unsigned int (*stack_trace_save_tsk_fn)(struct task_struct *tsk, unsigned long *store, unsigned int size, unsigned int skipnr);
-
-/*
-static bool ztex_consume_entry(void *cookie, unsigned long addr)
-{
-	struct stacktrace_cookie *c = cookie;
-
-    printk(KERN_INFO "[ztex] addr: %lu\n", addr);
-	if (c->len >= c->size)
-		return false;
-
-	if (c->skip > 0) {
-		c->skip--;
-		return true;
-	}
-	c->store[c->len++] = addr;
-	return c->len < c->size;
-}
-*/
+void (*show_stack_fn)(struct task_struct *task, unsigned long *sp, const char *loglvl);
 
 int noop_pre(struct kprobe *p, struct pt_regs *regs) { return 0; }
 void *find_kallsyms_lookup_name(char *sym) {
@@ -57,8 +39,8 @@ static int __init kernel_unwind_init(void)
 {
     struct task_struct *task;
     unsigned long store[1024];
-    stack_trace_save_tsk_fn = find_kallsyms_lookup_name("stack_trace_save_tsk");
-    if (!stack_trace_save_tsk_fn)
+    show_stack_fn = find_kallsyms_lookup_name("show_stack");
+    if (!show_stack_fn)
         return -EINVAL;
     printk(KERN_INFO "kernel_unwind: starting...\n");
 
@@ -69,8 +51,7 @@ static int __init kernel_unwind_init(void)
     }
 
     printk(KERN_INFO "[ztex] kernel_unwind: backtrace for process %d (%s):\n", pid, task->comm);
-    unsigned int nr_bt = stack_trace_save_tsk_fn(task, store, 20, 0);
-    stack_trace_print(store, nr_bt, 0);
+    show_stack_fn(task, NULL, KERN_INFO);
     return 0;
 }
 
